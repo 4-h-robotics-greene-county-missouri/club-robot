@@ -7,13 +7,21 @@ By Gunther Krueger (aka. DemonMidget) gunther@ozarkhomestead.com
 *************************************************************************/
 #define LEFT_CENTER 90
 #define RIGHT_CENTER 90
-#include <Servo.h>
+#include <SoftwareSerial.h>
 
 #define VREF 4.98
 #define SENSOR_MAX 1024
 
-#define LEFTSERVOPIN  10  
-#define RIGHTSERVOPIN  9
+#define XBEERX 5   
+#define XBEETX 6
+
+#define LEFTMOTORENABLE 9
+#define RIGHTMOTORENABLE 10
+#define LEFTFOREWARD 8
+#define LEFTBACKWARD 11
+#define RIGHTFOREWARD 12
+#define RIGHTBACKWARD 13
+
 #define MOTOR_ENABLE_PIN 4
 
 #define BUMPER_PIN 3
@@ -22,15 +30,11 @@ By Gunther Krueger (aka. DemonMidget) gunther@ozarkhomestead.com
 
 #define DELAY_TIME 2500
 
-float rpm;
-int geiger_input = 2;
-int cpm = 0;
+SoftwareSerial xbeePort(XBEETX, XBEERX);
+
 const int pingPin = 7;
 volatile long count = 0;
 volatile int bumper_flag=0;
-
-Servo leftServo; 
-Servo rightServo; 
 
 unsigned long nextPrint;
 
@@ -40,18 +44,29 @@ boolean stringComplete = false;  // whether the string is complete
 
   
 void setup() {
- serbSetup(); // adds the servos and prepares all SERB related variables
+ hbridgeSetup(); // adds the servos and prepares all SERB related variables
   // initialize serial:
   Serial.begin(57600);
+  xbeePort.begin(57600);
+  xbeePort.listen();
   Serial.println("# R.O.B.O.T v2 Mk.1");
+  xbeePort.println("# R.O.B.O.T v2 Mk.1");
   // reserve 200 bytes for the inputString:
   inputString.reserve(200);
   motorCommand("m+00+00");
   pinMode(MOTOR_ENABLE_PIN,OUTPUT);
   pinMode(BUMPER_PIN,INPUT); 
+  pinMode(LEFTMOTORENABLE, OUTPUT);
+  pinMode(RIGHTMOTORENABLE, OUTPUT);
+  pinMode(LEFTFOREWARD, OUTPUT);
+  pinMode(LEFTBACKWARD, OUTPUT);
+  pinMode(RIGHTFOREWARD, OUTPUT);
+  pinMode(RIGHTBACKWARD, OUTPUT);
+  pinMode(XBEERX, INPUT);
+  pinMode(XBEETX, OUTPUT);
+  
   digitalWrite(BUMPER_PIN, HIGH);
   digitalWrite(MOTOR_ENABLE_PIN, HIGH);
-  attachInterrupt(0,countPulse,FALLING);
   attachInterrupt(1,bumperHit,FALLING);
 }
 
@@ -86,17 +101,16 @@ void motorCommand (String cmd)
 }
 
 void loop() {
+  serialPoll();
   // print the string when a newline arrives:
   if(bumper_flag==1)
     driverFail();
-    
-  radiationCalc();
   if (stringComplete) { // there is at least one newline in inputString
-//    debug_dump(inputString, '%');
+    debug_dump(inputString, '%');
     int pos = inputString.indexOf('\n');
     while(pos != -1)
     {
-//      debug_dump(inputString, '$');
+      debug_dump(inputString, '$');
       ++pos; // pos points 1 past the newline
       String messageString = inputString.substring(0, pos);
       if(inputString.length() > pos)
@@ -104,7 +118,7 @@ void loop() {
       else
         inputString = "";
       pos = inputString.indexOf('\n');
-//      debug_dump(messageString, '@');
+      debug_dump(messageString, '@');
       char inByte = messageString[0];
       switch (inByte) {
       case 'm':    
@@ -133,30 +147,29 @@ void loop() {
  time loop() runs, so using delay inside loop can delay
  response.  Multiple bytes of data may be available.
  */
-void serialEvent() {
-  while (Serial.available()) {
+void serialPoll() {
+  debug_dump("poll", '~');
+  while (xbeePort.available()) {
     // get the new byte:
-    char inChar = (char)Serial.read();
+    char inChar = (char)xbeePort.read();
+    debug_dump("read", '~');
     // add it to the inputString:
     inputString += inChar;
     // if the incoming character is a newline, set a flag
     // so the main loop can do something about it:
     if (inChar == '\n') {
       stringComplete = true;
+      debug_dump("complete", '~');
+
     }
   }
 }
 /*
  * sets up your arduino to address your SERB using the included routines
 */
-void serbSetup(){
-  pinMode(LEFTSERVOPIN, OUTPUT);     //sets the left servo signal pin 
-                                     //to output
-  pinMode(RIGHTSERVOPIN, OUTPUT);    //sets the right servo signal pin 
-                                     //to output
-  leftServo.attach(LEFTSERVOPIN);    //attaches left servo
-  setSpeedLeft(0);  
-  rightServo.attach(RIGHTSERVOPIN);  //attaches right servo  setSpeedRight(0);
+void hbridgeSetup(){
+setSpeedLeft(0);
+setSpeedRight(0);
 }
 
 
@@ -164,18 +177,18 @@ void serbSetup(){
 
 void setSpeedRight(int rightSpeed){
   int speedval = RIGHT_CENTER - rightSpeed;
-  //Serial.print("right=");
-  //Serial.println(speedval);
-  rightServo.write(speedval);
+  Serial.print("right=");
+  Serial.println(speedval);
+  //rightServo.write(speedval);
   //rightServo.write(RIGHT_CENTER - rightSpeed);             //sends the new value to the servo
 }
 
 
 void setSpeedLeft(int leftSpeed){
   int speedval = LEFT_CENTER + leftSpeed;
-  //Serial.print("left=");
-  //Serial.println(speedval);
-  leftServo.write(speedval);
+  Serial.print("left=");
+  Serial.println(speedval);
+  //leftServo.write(speedval);
 }
 
 
@@ -186,23 +199,6 @@ void countPulse(){
   }
   //Serial.println(count);                           
   attachInterrupt(0,countPulse,FALLING);
-}
-
-void radiationCalc()
-    {
-      unsigned long mnow = millis();
-  if (nextPrint <= mnow)
-    {
-  cpm = count*24;
-  rpm = cpm*1.353e-8;
-  rpm = rpm*1000000.0;
-  Serial.print("# Micro-rads Per Minute = ");
-  Serial.println(rpm);
-  //Serial.print("# Counts Per Minute = ");
-  //Serial.println(cpm);
-  count = 0;
-  nextPrint = mnow + DELAY_TIME;
-    }  
 }
 
 
@@ -317,7 +313,7 @@ long microsecondsToCentimeters(long microseconds)
   return microseconds / 29 / 2;
 }
 
-/*
+
 char hex[] = "0123456789abcdef";
 
 void debug_dump(String data, char prompt)
@@ -339,4 +335,4 @@ void debug_dump(String data, char prompt)
   }
   Serial.println(prompt);
 }
-*/
+
