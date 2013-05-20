@@ -1,2 +1,2 @@
 start cmd /k python -m utsg -p COM4 -b 57600 --convert --ser-nl=CRLF -d "<broadcast>" -u 9000 -P 9002 --spy
-start cmd /k python -m utsg -p COM5 -b 9600 --convert --ser-nl=CRLF -d "<broadcast>" -u 9001 -P 9000 --sp
+start cmd /k python -m utsg -p COM5 -b 57600 --convert --ser-nl=CRLF -d "<broadcast>" -u 9001 -P 9000 --sp

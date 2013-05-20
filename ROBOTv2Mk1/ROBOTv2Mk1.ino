@@ -179,15 +179,19 @@ void setSpeedRight(int rightSpeed){
   if(rightSpeed < 0){
     digitalWrite(RIGHTFOREWARD, LOW);
     digitalWrite(RIGHTBACKWARD, HIGH);
+    Serial.println("Right Backward");
   }
   else{
     if(rightSpeed == 0){
       digitalWrite(RIGHTFOREWARD, LOW);
       digitalWrite(RIGHTBACKWARD, LOW);
+      Serial.println("Right Stop");
     }
     else{
       digitalWrite(RIGHTFOREWARD, HIGH);
       digitalWrite(RIGHTBACKWARD, LOW);
+      Serial.println("Right Foreward");
+
     }
   }
   int speedval = map(abs(rightSpeed), 0, 16, 0, 255);
@@ -195,7 +199,16 @@ void setSpeedRight(int rightSpeed){
   speedval = min(255, speedval);
   Serial.print("right=");
   Serial.println(speedval);
-  analogWrite(RIGHTMOTORENABLE, speedval);
+  //analogWrite(RIGHTMOTORENABLE, speedval);
+  if(speedval==0)
+  {
+    digitalWrite(RIGHTMOTORENABLE, LOW);
+  }
+  else
+  {
+    digitalWrite(RIGHTMOTORENABLE, HIGH);
+  }
+
 }
 
 
@@ -203,15 +216,18 @@ void setSpeedLeft(int leftSpeed){
   if(leftSpeed < 0){
     digitalWrite(LEFTFOREWARD, LOW);
     digitalWrite(LEFTBACKWARD, HIGH);
+    Serial.println("Left Backward");
   }
   else{
     if(leftSpeed == 0){
       digitalWrite(LEFTFOREWARD, LOW);
       digitalWrite(LEFTBACKWARD, LOW);
+      Serial.println("Left Stop");
     }
     else{
       digitalWrite(LEFTFOREWARD, HIGH);
       digitalWrite(LEFTBACKWARD, LOW);
+      Serial.println("Left Foreward");
     }
   }
   int speedval = map(abs(leftSpeed), 0, 16, 0, 255);
@@ -219,7 +235,15 @@ void setSpeedLeft(int leftSpeed){
   speedval = min(255, speedval);
   Serial.print("right=");
   Serial.println(speedval);
-  analogWrite(LEFTMOTORENABLE, speedval);
+  //analogWrite(LEFTMOTORENABLE, speedval);
+  if(speedval==0)
+  {
+    digitalWrite(LEFTMOTORENABLE, LOW);
+  }
+  else
+  {
+    digitalWrite(LEFTMOTORENABLE, HIGH);
+  }
 }
 
 
