@@ -152,14 +152,14 @@ void serialPoll() {
   while (xbeePort.available()) {
     // get the new byte:
     char inChar = (char)xbeePort.read();
-    debug_dump("read", '~');
+   // debug_dump("read", '~');
     // add it to the inputString:
     inputString += inChar;
     // if the incoming character is a newline, set a flag
     // so the main loop can do something about it:
     if (inChar == '\n') {
       stringComplete = true;
-      debug_dump("complete", '~');
+     // debug_dump("complete", '~');
 
     }
   }
@@ -176,19 +176,50 @@ setSpeedRight(0);
 
 
 void setSpeedRight(int rightSpeed){
-  int speedval = RIGHT_CENTER - rightSpeed;
+  if(rightSpeed < 0){
+    digitalWrite(RIGHTFOREWARD, LOW);
+    digitalWrite(RIGHTBACKWARD, HIGH);
+  }
+  else{
+    if(rightSpeed == 0){
+      digitalWrite(RIGHTFOREWARD, LOW);
+      digitalWrite(RIGHTBACKWARD, LOW);
+    }
+    else{
+      digitalWrite(RIGHTFOREWARD, HIGH);
+      digitalWrite(RIGHTBACKWARD, LOW);
+    }
+  }
+  int speedval = map(abs(rightSpeed), 0, 16, 0, 255);
+  speedval = max(0, speedval);
+  speedval = min(255, speedval);
   Serial.print("right=");
   Serial.println(speedval);
-  //rightServo.write(speedval);
-  //rightServo.write(RIGHT_CENTER - rightSpeed);             //sends the new value to the servo
+  analogWrite(RIGHTMOTORENABLE, speedval);
 }
 
 
 void setSpeedLeft(int leftSpeed){
-  int speedval = LEFT_CENTER + leftSpeed;
-  Serial.print("left=");
+  if(leftSpeed < 0){
+    digitalWrite(LEFTFOREWARD, LOW);
+    digitalWrite(LEFTBACKWARD, HIGH);
+  }
+  else{
+    if(leftSpeed == 0){
+      digitalWrite(LEFTFOREWARD, LOW);
+      digitalWrite(LEFTBACKWARD, LOW);
+    }
+    else{
+      digitalWrite(LEFTFOREWARD, HIGH);
+      digitalWrite(LEFTBACKWARD, LOW);
+    }
+  }
+  int speedval = map(abs(leftSpeed), 0, 16, 0, 255);
+  speedval = max(0, speedval);
+  speedval = min(255, speedval);
+  Serial.print("right=");
   Serial.println(speedval);
-  //leftServo.write(speedval);
+  analogWrite(LEFTMOTORENABLE, speedval);
 }
 
 
