@@ -30,7 +30,7 @@ By Gunther Krueger (aka. DemonMidget) gunther@ozarkhomestead.com
 
 #define DELAY_TIME 2500
 
-SoftwareSerial xbeePort(XBEETX, XBEERX);
+SoftwareSerial xbeePort(XBEERX, XBEETX);
 
 const int pingPin = 7;
 volatile long count = 0;
@@ -47,10 +47,10 @@ void setup() {
  hbridgeSetup(); // adds the servos and prepares all SERB related variables
   // initialize serial:
   Serial.begin(57600);
-  xbeePort.begin(57600);
+  xbeePort.begin(9600);
   xbeePort.listen();
-  Serial.println("# R.O.B.O.T v2 Mk.1");
-  xbeePort.println("# R.O.B.O.T v2 Mk.1");
+  Serial.println("# R.O.B.O.T v2 Mk.1 (serial)");
+  xbeePort.println("# R.O.B.O.T v2 Mk.1 (xbee)");
   // reserve 200 bytes for the inputString:
   inputString.reserve(200);
   motorCommand("m+00+00");
@@ -148,7 +148,7 @@ void loop() {
  response.  Multiple bytes of data may be available.
  */
 void serialPoll() {
-  debug_dump("poll", '~');
+//  debug_dump("poll", '~');
   while (xbeePort.available()) {
     // get the new byte:
     char inChar = (char)xbeePort.read();
